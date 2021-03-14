@@ -4,13 +4,15 @@ Python provides built-in sort/sorted functions that use timsort internally.
 You cannot use these built-in functions anywhere in this file.
 
 Every function in this file takes a comparator `cmp` as input
-which controls how the elements of the list should be compared against each other:
+which controls how the elements of the list should be
+compared against each other:
 If cmp(a, b) returns -1, then a < b;
 if cmp(a, b) returns  1, then a > b;
 if cmp(a, b) returns  0, then a == b.
 '''
 
 import random
+
 
 def cmp_standard(a, b):
     '''
@@ -63,20 +65,52 @@ def _merged(xs, ys, cmp=cmp_standard):
     Runs in linear time.
 
     NOTE:
-    In python, helper functions are frequently prepended with the _.
-    This is a signal to users of a library that these functions are for "internal use only",
+    In python, helper functions are
+    frequently prepended with the _.
+    This is a signal to users of a library that these
+    functions are for "internal use only",
     and not part of the "public interface".
 
-    This _merged function could be implemented as a local function within the merge_sorted scope rather than a global function.
-    The downside of this is that the function can then not be tested on its own.
-    Typically, you should only implement a function as a local function if it cannot function on its own
+    This _merged function could be implemented as
+    a local function within the merge_sorted scope
+    rather than a global function.
+    The downside of this is that the function
+    can then not be tested on its own.
+    Typically, you should only implement a
+    function as a local function if it cannot function on its own
     (like the go functions from binary search).
     If it's possible to make a function stand-alone,
-    then you probably should do that and write test cases for the stand-alone function.
+    then you probably should do that and write
+    test cases for the stand-alone function.
 
-    >>> _merged([1, 3, 5], [2, 4, 6])
+    >>> _merged([1, 3, 5],[2, 4, 6])
     [1, 2, 3, 4, 5, 6]
     '''
+    i = z = 0
+    final_list = []
+
+    while i < len(xs) and z < len(ys):
+        result = cmp(xs[i], ys[z])
+        if result == -1:
+            final_list.append(xs[i])
+            i += 1
+        if result == 1:
+            final_list.append(ys[z])
+            z += 1
+        if result == 0:
+            final_list.append(xs[i])
+            final_list.append(ys[z])
+            i += 1
+            z += 1
+
+    while i < len(xs):
+        final_list.append(xs[i])
+        i += 1
+    while z < len(ys):
+        final_list.append(ys[z])
+        z += 1
+
+    return final_list
 
 
 def merge_sorted(xs, cmp=cmp_standard):
@@ -96,14 +130,41 @@ def merge_sorted(xs, cmp=cmp_standard):
     You should not modify the input list xs in any way.
     '''
 
+    if len(xs) <= 1:
+        return xs
+    else:
+        mid = len(xs) // 2
+        left = xs[:mid]
+        right = xs[mid:]
+        left_sort = merge_sorted(left, cmp)
+        right_sort = merge_sorted(right, cmp)
+        return _merged(left_sort, right_sort, cmp)
+
 
 def quick_sorted(xs, cmp=cmp_standard):
     '''
     Quicksort is like mergesort,
     but it uses a different strategy to split the list.
     Instead of splitting the list down the middle,
-    a "pivot" value is randomly selected, 
-    and the list is split into a "less than" sublist and a "greater than" sublist.
+    a "pivot" value is randomly selected,
+    and the list is split into a "less than"
+    sublist and a "greater than" sublist.
+
+    The pseudocode is:
+
+        if xs has 1 element
+            it is sorted, so return xs
+        else
+            select a pivot value p
+            put all the values less than p in a list
+            put all the values greater than p in a list
+            put all the values equal to p in a list
+            sort the greater/less than lists recursively
+            return the concatenation of
+            (less than, equal, greater than)
+
+    and the list is split into a "less than"
+    sublist and a "greater than" sublist.
 
     The pseudocode is:
 
@@ -117,27 +178,32 @@ def quick_sorted(xs, cmp=cmp_standard):
             sort the greater/less than lists recursively
             return the concatenation of (less than, equal, greater than)
 
+            sort the left
+            sort the right
+            merge the two sorted halves
+
     You should return a sorted version of the input list xs.
     You should not modify the input list xs in any way.
     '''
+    if len(xs) <= 1:
+        return xs
+    else:
+        pivot_index = random.randint(0, len(xs) - 1)
+        pivot = xs[pivot_index]
+        more = []
+        less = []
+        same = []
 
+        for val in list(xs):
+            test = cmp(val, pivot)
+            if test == -1:
+                less.append(val)
+            if test == 1:
+                more.append(val)
+            if test == 0:
+                same.append(val)
 
-def quick_sort(xs, cmp=cmp_standard):
-    '''
-    EXTRA CREDIT:
-    The main advantage of quick_sort is that it can be implemented "in-place".
-    This means that no extra lists are allocated,
-    or that the algorithm uses Theta(1) additional memory.
-    Merge sort, on the other hand, must allocate intermediate lists for the merge step,
-    and has a Theta(n) memory requirement.
-    Even though quick sort and merge sort both have the same Theta(n log n) runtime,
-    this more efficient memory usage typically makes quick sort faster in practice.
-    (We say quick sort has a lower "constant factor" in its runtime.)
-    The downside of implementing quick sort in this way is that it will no longer be a [stable sort](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability),
-    but this is typically inconsequential.
-
-    Follow the pseudocode of the Lomuto partition scheme given on wikipedia
-    (https://en.wikipedia.org/wiki/Quicksort#Algorithm)
-    to implement quick_sort as an in-place algorithm.
-    You should directly modify the input xs variable instead of returning a copy of the list.
-    '''
+        less_sort = quick_sorted(less, cmp)
+        more_sort = quick_sorted(more, cmp)
+        final = less_sort + same + more_sort
+        return (final)
