@@ -133,9 +133,9 @@ def merge_sorted(xs, cmp=cmp_standard):
     if len(xs) <= 1:
         return xs
     else:
-        mid = len(xs) // 2
-        left = xs[:mid]
-        right = xs[mid:]
+        middle = len(xs) // 2
+        left = xs[:middle]
+        right = xs[middle:]
         left_sort = merge_sorted(left, cmp)
         right_sort = merge_sorted(right, cmp)
         return _merged(left_sort, right_sort, cmp)
